@@ -1,72 +1,160 @@
-# take-home-assessment
+# Take Home Assessment
 
-A small Spring Boot HTTP API with a single endpoint, `GET /hello-world`.
+This project is a simple REST API built with **Spring Boot 4.1** and **Java 21**. It exposes a single endpoint that returns a greeting or an error based on the first letter of the provided name.
 
-## Endpoint
+---
 
-`GET /hello-world?name={name}`
+## API Endpoint
 
-| Condition | Status | Body |
-| --- | --- | --- |
-| First letter of `name` is A-M / a-m | 200 | `{ "message": "Hello <Name>" }` |
-| First letter of `name` is N-Z / n-z | 400 | `{ "error": "Invalid Input" }` |
-| `name` is missing, empty, or whitespace-only | 400 | `{ "error": "Invalid Input" }` |
+### `GET /hello-world?name={name}`
 
-## How to run
+| Input | Response |
+|-------|----------|
+| Name starts with **A–M** (case-insensitive) | **200 OK** → `{ "message": "Hello <Name>" }` |
+| Name starts with **N–Z** (case-insensitive) | **400 Bad Request** → `{ "error": "Invalid Input" }` |
+| Name is missing, empty, or only whitespace | **400 Bad Request** → `{ "error": "Invalid Input" }` |
 
-Requires JDK 21+.
+---
+
+## Running the Application
+
+### Prerequisites
+
+- Java 21 or later
+- Maven (or use the included Maven Wrapper)
+
+### Start the application
+
+**macOS / Linux**
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-On Windows:
+**Windows**
 
 ```bash
 mvnw.cmd spring-boot:run
 ```
 
-The app starts on `http://localhost:8080`. Example requests:
+Once the application starts, it will be available at:
+
+```
+http://localhost:8080
+```
+
+---
+
+## Example Requests
+
+### Valid request
 
 ```bash
 curl "http://localhost:8080/hello-world?name=alice"
-# 200 {"message":"Hello Alice"}
-
-curl "http://localhost:8080/hello-world?name=nathan"
-# 400 {"error":"Invalid Input"}
-
-curl "http://localhost:8080/hello-world"
-# 400 {"error":"Invalid Input"}
 ```
 
-## Trying it out with Swagger UI
+Response
 
-An interactive OpenAPI/Swagger UI (via springdoc) is bundled with the app, so you can exercise the endpoint from a browser instead of `curl`:
+```json
+{
+  "message": "Hello Alice"
+}
+```
 
-1. Start the app (see above) and leave it running.
-2. Open `http://localhost:8080/swagger-ui.html`.
-3. Expand the **Hello World** tag, then `GET /hello-world`.
-4. Click **Try it out**, enter a value in the `name` field (e.g. `alice`), and click **Execute**.
-5. Check the **Response body** and **Server response code**:
-   - A name starting with A–M/a–m (e.g. `alice`) → `200` with `{ "message": "Hello Alice" }`.
-   - A name starting with N–Z/n–z (e.g. `nathan`) → `400` with `{ "error": "Invalid Input" }`.
-   - Leave `name` blank and execute → `400` with `{ "error": "Invalid Input" }`.
+---
 
-The raw OpenAPI spec is also available at `http://localhost:8080/v3/api-docs` if you want to inspect it directly or import it into another tool (e.g. Postman).
+### Invalid request (starts with N–Z)
 
-## How to run the tests
+```bash
+curl "http://localhost:8080/hello-world?name=nathan"
+```
+
+Response
+
+```json
+{
+  "error": "Invalid Input"
+}
+```
+
+---
+
+### Missing name
+
+```bash
+curl "http://localhost:8080/hello-world"
+```
+
+Response
+
+```json
+{
+  "error": "Invalid Input"
+}
+```
+
+---
+
+## API Documentation
+
+Swagger UI is included with the project, making it easy to test the endpoint without using `curl`.
+
+After starting the application, open:
+
+```
+http://localhost:8080/swagger-ui.html
+```
+
+From there you can:
+
+1. Expand the **Hello World** section.
+2. Select **GET /hello-world**.
+3. Click **Try it out**.
+4. Enter a value for `name`.
+5. Click **Execute** to see the response.
+
+The generated OpenAPI specification is also available at:
+
+```
+http://localhost:8080/v3/api-docs
+```
+
+---
+
+## Running the Tests
+
+Run all tests using:
 
 ```bash
 ./mvnw test
 ```
 
-This runs:
-- `HelloWorldServiceTest` — plain unit tests for the greeting/validation logic (valid names, boundary letters M/N, missing/empty/whitespace input, non-letter first characters).
-- `HelloWorldControllerTest` — `@WebMvcTest`/`MockMvc` tests exercising the HTTP layer (status codes and JSON body shape) for the same cases.
+The project includes:
 
-## Assumptions
+- **HelloWorldServiceTest** – Unit tests covering the business logic, including valid names, boundary cases (M/N), blank input, and invalid characters.
+- **HelloWorldControllerTest** – `MockMvc` tests that verify the API responses, HTTP status codes, and JSON payloads.
 
-- Validity is determined only by the first character of `name`, case-insensitively.
-- Only the first character of the returned name is case-normalized (uppercased) to match the greeting example (`alice` → `Hello Alice`); the rest of the input is passed through unchanged (e.g. `aLICE` → `Hello ALICE`).
-- A `name` that is missing, empty, or made up entirely of whitespace is treated as invalid input (`400`), per the spec's "missing or empty" rule extended to blank strings.
-- A first character that isn't a letter (a digit, symbol, etc.) is treated as invalid input (`400`), since it falls outside both the A–M and N–Z ranges described in the spec.
+---
+
+## Design Decisions & Assumptions
+
+A few implementation choices were made while keeping the assignment requirements in mind:
+
+- The first character of the name determines whether the request is valid, and the check is **case-insensitive**.
+- The returned greeting capitalizes only the first character of the provided name. For example:
+  - `alice` → `Hello Alice`
+  - `aLICE` → `Hello ALICE`
+- Requests where `name` is missing, empty, or contains only whitespace return **400 Bad Request**.
+- If the first character is not an alphabetic letter (for example, a digit or symbol), the request is also treated as invalid and returns **400 Bad Request**.
+
+---
+
+## Technology Stack
+
+- Java 21
+- Spring Boot 4.1
+- Spring Web
+- springdoc OpenAPI (Swagger UI)
+- JUnit 5
+- MockMvc
+- Maven
